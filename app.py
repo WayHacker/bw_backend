@@ -1,4 +1,5 @@
 from flask import Flask, request
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -25,11 +26,30 @@ def hello():
 
 @app.route("/about")
 def about_us():
-    print(request.args)
     return '''<div style="border: 100px solid blue">
-                <p>THIS IS A MULTIPAGEAPPLICATION BY ALEX & KOLYA!</p>
+                <p>THIS IS MULTIPAGEAPPLICATION <span id="version"></span> BY <span id="who"></span>!</p>
                 <a href="/">
                     back
                 </a>
+                <p id="current_time"></p>
+                <script>
+                    const req = fetch("/about_us_data");
+                    const data = req.then(response => response.json());
+                    data.then(data => {
+                        document.getElementById("version").innerHTML = data["version"];
+                        document.getElementById("who").innerHTML = data["made_by"];
+                        document.getElementById("current_time").innerHTML = `The current time is: ${data["current_time"]}`;
+                    });
+                </script>
             </div>
     '''
+
+@app.route("/about_us_data")
+def about_us_data():
+    # Do some database magic, it returns some info like a profile.
+
+    return {
+        "made_by": "Alex&Kolya",
+        "current_time": datetime.now().isoformat(),
+        "version": "1.0.0"
+    }
