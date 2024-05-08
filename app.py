@@ -1,7 +1,41 @@
 from flask import Flask, request
 from datetime import datetime
+from typing import List
+from typing import Optional
+from sqlalchemy import ForeignKey, String, create_engine, text
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+import uuid
 
+class Base(DeclarativeBase):
+    pass
+
+class Employee(Base):
+    __tablename__ = "employee"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, server_default=text("gen_random_uuid()"))
+    name: Mapped[Optional[str]]
+    phone: Mapped[str]
+
+   
+
+class Object(Base):
+    __tablename__ = "object"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, server_default=text("gen_random_uuid()"))
+    name: Mapped[Optional[str]]
+
+
+
+
+
+
+
+db_url = "postgresql://localhost/chougodno"
+
+engine = create_engine(db_url)
 app = Flask(__name__)
+
+
 
 def say_hello_to(user: str) -> str:
     return f'''
