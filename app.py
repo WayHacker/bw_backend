@@ -1,54 +1,63 @@
-from flask import Flask, request
+from flask import Flask, request, Blueprint, url_for
 from datetime import datetime
 from typing import List
 from typing import Optional
-from sqlalchemy import ForeignKey, String, create_engine, text
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy import ForeignKey, String, create_engine, text, select
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, Session
 import uuid
+
 
 class Base(DeclarativeBase):
     pass
 
+
 class Employee(Base):
     __tablename__ = "employee"
 
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, server_default=text("gen_random_uuid()"))
+    id: Mapped[uuid.UUID] = mapped_column(
+        primary_key=True, server_default=text("gen_random_uuid()")
+    )
     name: Mapped[Optional[str]]
     phone: Mapped[str]
 
-   
 
 class Object(Base):
     __tablename__ = "object"
 
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, server_default=text("gen_random_uuid()"))
+    id: Mapped[uuid.UUID] = mapped_column(
+        primary_key=True, server_default=text("gen_random_uuid()")
+    )
     name: Mapped[Optional[str]]
 
 
+def object_to_dict(obj):
 
-
-
+    return {"id": obj.id, "name": obj.name}
 
 
 db_url = "postgresql://localhost/chougodno"
 
 engine = create_engine(db_url)
+session = Session(engine)
 app = Flask(__name__)
 
+object_api = Blueprint("objects", "objects")
 
 
 def say_hello_to(user: str) -> str:
-    return f'''
+    return f"""
     <div style="border: 100px solid red">
         <p>Hello, {user}!</p>
         <a href="/about">
             About Us
         </a>
     </div>
-    '''
+    """
+
 
 def test_greets_user():
     assert "kolya" in say_hello_to("kolya")
+
 
 @app.route("/")
 def hello():
@@ -60,7 +69,7 @@ def hello():
 
 @app.route("/about")
 def about_us():
-    return '''<div style="border: 100px solid blue">
+    return """<div style="border: 100px solid blue">
                 <p>THIS IS MULTIPAGEAPPLICATION <span id="version"></span> BY <span id="who"></span>!</p>
                 <a href="/">
                     back
@@ -76,7 +85,8 @@ def about_us():
                     });
                 </script>
             </div>
-    '''
+    """
+
 
 @app.route("/about_us_data")
 def about_us_data():
@@ -85,5 +95,16 @@ def about_us_data():
     return {
         "made_by": "Alex&Kolya",
         "current_time": datetime.now().isoformat(),
-        "version": "1.0.0"
+        "version": "1.0.0",
     }
+
+
+@object_api.route("/")
+def get_object():
+    q = select(Object)
+    objects = session.scalars(q).all()
+    new_dict = [object_to_dict(x) for x in objects]
+    return new_dict
+
+
+app.register_blueprint(object_api, url_prefix="/objects")
