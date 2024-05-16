@@ -7,9 +7,6 @@ class Base(DeclarativeBase):
     pass
 
 
-
-
-
 db_url = "postgresql://localhost/chougodno"
 engine = create_engine(db_url)
 session = Session(engine)

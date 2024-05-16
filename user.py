@@ -8,7 +8,7 @@ from db import Base, session
 
 
 class User(Base):
-    __tablename__ = "employee"
+    __tablename__ = "user"
 
     id: Mapped[uuid.UUID] = mapped_column(
         primary_key=True, server_default=text("gen_random_uuid()")
