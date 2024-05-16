@@ -8,7 +8,8 @@ from object import object_api
 app.register_blueprint(object_api, url_prefix="/objects")
 from user import user_api
 app.register_blueprint(user_api, url_prefix="/users")
-
+from assignment import assignment_api
+app.register_blueprint(assignment_api, url_prefix="/assignments")
 def say_hello_to(user: str) -> str:
     return f"""
     <div style="border: 100px solid red">

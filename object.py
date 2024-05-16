@@ -24,7 +24,8 @@ object_api = Blueprint("objects", "objects")
 
 @object_api.route("/", methods=["POST"])
 def create_object():
-    new_object = Object(name = "Ermak")
+    data = request.json
+    new_object = Object(name = data.get("name"))
     search = session.execute(select(Object).filter_by(name=new_object.name)).first()
     if search is None:
         session.add(new_object)
@@ -58,5 +59,16 @@ def delete_object(id):
     else:
         return ({'error':'object not found'},404)
 
+@object_api.route("/<id>/users")
+def get_users_from_object(id):
+    from assignment import Assignment
+    from user import User
+    search = session.execute(select(Object).filter_by(id=id)).scalar_one_or_none()
+    if search is None:
+        return ({'error':'object not found'},404)
+    users = session.scalars(select(User).join(Assignment).filter_by(object_id=id)).all()
+    from user import user_to_dict
+    return [user_to_dict(x) for x in users] 
+        
 
 
