@@ -10,6 +10,9 @@ from user import user_api
 app.register_blueprint(user_api, url_prefix="/users")
 from assignment import assignment_api
 app.register_blueprint(assignment_api, url_prefix="/assignments")
+from tasks import task_api
+app.register_blueprint(task_api, url_prefix="/tasks")
+
 def say_hello_to(user: str) -> str:
     return f"""
     <div style="border: 100px solid red">
