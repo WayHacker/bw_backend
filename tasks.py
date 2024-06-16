@@ -1,5 +1,5 @@
-from flask import request, Blueprint
-from sqlalchemy import text, select, DateTime
+from flask import Blueprint
+from sqlalchemy import text, select
 from sqlalchemy.orm import Mapped, mapped_column
 import uuid
 from db import Base, session
@@ -32,44 +32,52 @@ class ModuleTaskOut(BaseModel):
 task_api = Blueprint("tasks", "tasks")
 
 
-def task_to_dict(obj):
-
-    return {"id": obj.id, "description": obj.description, "deadline": obj.deadline}
-
-
 @task_api.route("/", methods=["POST"])
 @validate()
-def create_assignment(body: ModuleTaskIn):
+def create_task(body: ModuleTaskIn):
     new_task = Task(description=body.description, deadline=body.deadline)
     session.add(new_task)
     session.commit()
     return (
         ModuleTaskOut(
             id=new_task.id, description=new_task.description, deadline=new_task.deadline
-        ),
+        ).model_dump(),
         201,
     )
 
 
-@task_api.route("/")
-def list_assignments():
+@task_api.route("/", methods=["GET"])
+@validate()
+def list_tasks():
     q = select(Task)
-    assignments = session.scalars(q).all()
-    new_dict = [task_to_dict(x) for x in assignments]
-    return new_dict
+    tasks = session.scalars(q).all()
+    return [
+        ModuleTaskOut(
+            description=x.description, id=x.id, deadline=x.deadline
+        ).model_dump()
+        for x in tasks
+    ]
 
 
-@task_api.route("/<id>")
-def get_assignment(id):
+@task_api.route("/<id>", methods=["GET"])
+@validate()
+def get_task(id: uuid.UUID):
     search = session.execute(select(Task).filter_by(id=id)).scalar_one_or_none()
     if search is not None:
-        return (task_to_dict(search), 200)
+        return (
+            ModuleTaskOut(
+                id=id, description=search.description, deadline=search.deadline
+            ).model_dump(),
+            200,
+        )
+
     else:
-        return ({"error": "assignment not found"}, 404)
+        return ({"error": "task not found"}, 404)
 
 
 @task_api.route("/<id>", methods=["DELETE"])
-def delete_assignment(id):
+@validate()
+def delete_task(id: uuid.UUID):
     search = session.execute(select(Task).filter_by(id=id)).scalar_one_or_none()
     if search is not None:
         session.delete(search)
