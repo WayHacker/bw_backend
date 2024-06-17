@@ -85,3 +85,18 @@ def delete_task(id: uuid.UUID):
         return ("", 204)
     else:
         return ({"error": "assignment not found"}, 404)
+
+
+@task_api.route("/<id>/instructions", methods=["GET"])
+@validate()
+def get_instructions_from_task(id: uuid.UUID):
+    from task_instructions import TaskInstructions
+    from instruction import Instruction, InstrucModelOut
+
+    search = session.execute(select(Task).filter_by(id=id)).scalar_one_or_none()
+    if search is None:
+        return ({"error": "object not found"}, 404)
+    instructions = session.scalars(
+        select(Instruction).join(TaskInstructions).filter_by(task_id=id)
+    ).all()
+    return [InstrucModelOut(id=x.id, name=x.name).model_dump() for x in instructions]
