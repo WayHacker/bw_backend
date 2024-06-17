@@ -5,15 +5,23 @@ from db import Base
 app = Flask(__name__)
 
 from object import object_api
+
 app.register_blueprint(object_api, url_prefix="/objects")
 from user import user_api
+
 app.register_blueprint(user_api, url_prefix="/users")
 from assignment import assignment_api
+
 app.register_blueprint(assignment_api, url_prefix="/assignments")
 from tasks import task_api
+
 app.register_blueprint(task_api, url_prefix="/tasks")
 from assignment_task import assignment_task_api
+
 app.register_blueprint(assignment_task_api, url_prefix="/assignments_tasks")
+from instruction import instruction_api
+
+app.register_blueprint(instruction_api, url_prefix="/instructions")
 
 
 def say_hello_to(user: str) -> str:
@@ -69,6 +77,3 @@ def about_us_data():
         "current_time": datetime.now().isoformat(),
         "version": "1.0.0",
     }
-
-
-
