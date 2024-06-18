@@ -59,10 +59,10 @@ def upload_material():
 @validate()
 def list_material():
     q = select(Material)
-    instructions = session.scalars(q).all()
+    materials = session.scalars(q).all()
     return [
         MaterialModelOut(name=x.name, id=x.id, supply=x.supply).model_dump()
-        for x in instructions
+        for x in materials
     ]
 
 
@@ -124,3 +124,13 @@ def switch_supply(id: uuid.UUID):
         return ("", 204)
     else:
         return ({"error": "material not found"}, 404)
+
+
+@material_api.route("/supply/<supply>", methods=["GET"])
+@validate()
+def list_material_by_supply(supply: bool):
+    materials = session.execute(select(Material).filter_by(supply=supply)).scalars()
+    return [
+        MaterialModelOut(name=x.name, id=x.id, supply=x.supply).model_dump()
+        for x in materials
+    ]
