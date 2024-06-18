@@ -28,6 +28,9 @@ app.register_blueprint(instruct_task_api, url_prefix="/task_instructions")
 from material import material_api
 app.register_blueprint(material_api, url_prefix="/materials")
 
+from task_materials import materials_task_api
+app.register_blueprint(materials_task_api, url_prefix="/task_materials")
+
 
 def say_hello_to(user: str) -> str:
     return f"""
