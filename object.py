@@ -93,24 +93,71 @@ def get_users_from_object(id: uuid.UUID):
     from user import user_to_dict
 
     return [user_to_dict(x) for x in users]
-    
 
 
 @object_api.route("/<id>/tasks", methods=["GET"])
 @validate()
 def get_tasks_from_object(id: uuid.UUID):
-    from assignment_task import AssignmentTask
     from tasks import Task, ModuleTaskOut
 
     search = session.execute(select(Object).filter_by(id=id)).scalar_one_or_none()
     if search is None:
         return ({"error": "object not found"}, 404)
-    tasks = session.scalars(
-        select(Task).join(AssignmentTask).filter_by(object_id=id)
-    ).all()
+    tasks = session.scalars(select(Task).filter_by(object_id=id)).all()
     return [
         ModuleTaskOut(
-            id=x.id, description=x.description, deadline=x.deadline
+            id=x.id,
+            description=x.description,
+            deadline=x.deadline,
+            work_scope=x.work_scope,
+            object_id=x.object_id,
+            done_scope=x.done_scope,
         ).model_dump()
         for x in tasks
     ]
+
+
+@object_api.route("/<id>/tasks/fact", methods=["GET"])
+@validate()
+def calculate_fact(id: uuid.UUID):
+    search = session.execute(select(Object).filter_by(id=id)).scalar_one_or_none()
+    if search is None:
+        return ({"error": "object not found"}, 404)
+    from tasks import Task, ModuleTaskOut
+
+    stmt = session.scalars(select(Task).where(Task.done_scope == Task.work_scope))
+    if stmt is not None:
+        done_task = len(
+            [
+                ModuleTaskOut(
+                    id=x.id,
+                    description=x.description,
+                    deadline=x.deadline,
+                    work_scope=x.work_scope,
+                    object_id=x.object_id,
+                    done_scope=x.done_scope,
+                ).model_dump()
+                for x in stmt
+            ]
+        )
+    else:
+        done_task = 0
+
+    stmt = session.scalars(select(Task).where(Task.done_scope != Task.work_scope))
+    if stmt is None:
+        return ({"error": "tasks not found"}, 404)
+    undone_tasks = len(
+        [
+            ModuleTaskOut(
+                id=x.id,
+                description=x.description,
+                deadline=x.deadline,
+                work_scope=x.work_scope,
+                object_id=x.object_id,
+                done_scope=x.done_scope,
+            ).model_dump()
+            for x in stmt
+        ]
+    )
+    return {"some shit": f"{(done_task/undone_tasks * 100)}"}
+    session.commit()

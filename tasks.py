@@ -1,10 +1,11 @@
 from flask import Blueprint
-from sqlalchemy import text, select
+from sqlalchemy import text, select, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 import uuid
 from db import Base, session
 from pydantic import BaseModel
 from flask_pydantic import validate
+from typing import Optional
 import datetime
 
 
@@ -16,9 +17,15 @@ class Task(Base):
     )
     description: Mapped[str]
     deadline: Mapped[datetime.datetime]
+    work_scope: Mapped[int]
+    done_scope: Mapped[int]
+    object_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("object.id"))
 
 
 class ModuleTaskIn(BaseModel):
+    done_scope: Optional[int] = 0 
+    work_scope: int
+    object_id: uuid.UUID
     description: str
     deadline: datetime.datetime
 
@@ -27,6 +34,9 @@ class ModuleTaskOut(BaseModel):
     id: uuid.UUID
     description: str
     deadline: datetime.datetime
+    work_scope: int
+    object_id: uuid.UUID
+    done_scope: int
 
 
 task_api = Blueprint("tasks", "tasks")
@@ -35,12 +45,28 @@ task_api = Blueprint("tasks", "tasks")
 @task_api.route("/", methods=["POST"])
 @validate()
 def create_task(body: ModuleTaskIn):
-    new_task = Task(description=body.description, deadline=body.deadline)
+    from object import Object
+
+    search = session.execute(select(Object).filter_by(id=body.object_id)).first()
+    if search is None:
+        return ({"error": "object not found"}, 404)
+    new_task = Task(
+        description=body.description,
+        deadline=body.deadline,
+        work_scope=body.work_scope,
+        done_scope=body.done_scope,
+        object_id=body.object_id,
+    )
     session.add(new_task)
     session.commit()
     return (
         ModuleTaskOut(
-            id=new_task.id, description=new_task.description, deadline=new_task.deadline
+            id=new_task.id,
+            description=new_task.description,
+            deadline=new_task.deadline,
+            work_scope=new_task.work_scope,
+            object_id=new_task.object_id,
+            done_scope=new_task.done_scope,
         ).model_dump(),
         201,
     )
@@ -53,7 +79,12 @@ def list_tasks():
     tasks = session.scalars(q).all()
     return [
         ModuleTaskOut(
-            description=x.description, id=x.id, deadline=x.deadline
+            description=x.description,
+            id=x.id,
+            deadline=x.deadline,
+            work_scope=x.work_scope,
+            object_id=x.object_id,
+            done_scope=x.done_scope,
         ).model_dump()
         for x in tasks
     ]
