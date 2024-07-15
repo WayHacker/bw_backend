@@ -1,7 +1,7 @@
 from flask import request, Blueprint
 from typing import List
 from typing import Optional
-from sqlalchemy import ForeignKey, String, text, select
+from sqlalchemy import ForeignKey, String, text, select, and_
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import uuid
 from db import Base, session
@@ -97,13 +97,14 @@ def get_users_from_object(id: uuid.UUID):
 
 @object_api.route("/<id>/tasks", methods=["GET"])
 @validate()
-def get_tasks_from_object(id: uuid.UUID):
-    from tasks import Task, ModuleTaskOut
-
+def get_all_tasks_from_object(id: uuid.UUID):
     search = session.execute(select(Object).filter_by(id=id)).scalar_one_or_none()
     if search is None:
         return ({"error": "object not found"}, 404)
+    from tasks import Task, ModuleTaskOut
+
     tasks = session.scalars(select(Task).filter_by(object_id=id)).all()
+
     return [
         ModuleTaskOut(
             id=x.id,
@@ -117,7 +118,59 @@ def get_tasks_from_object(id: uuid.UUID):
     ]
 
 
-@object_api.route("/<id>/tasks/fact", methods=["GET"])
+@object_api.route("/<id>/done_tasks", methods=["GET"])
+@validate()
+def get_done_tasks_from_object(id: uuid.UUID):
+    search = session.execute(select(Object).filter_by(id=id)).scalar_one_or_none()
+    if search is None:
+        return ({"error": "object not found"}, 404)
+    from tasks import Task, ModuleTaskOut
+
+    tasks = session.scalars(
+        select(Task).where(
+            and_(id == Task.object_id, Task.done_scope == Task.work_scope)
+        )
+    ).all()
+    return [
+        ModuleTaskOut(
+            id=x.id,
+            description=x.description,
+            deadline=x.deadline,
+            work_scope=x.work_scope,
+            object_id=x.object_id,
+            done_scope=x.done_scope,
+        ).model_dump()
+        for x in tasks
+    ]
+
+
+@object_api.route("/<id>/undone_tasks", methods=["GET"])
+@validate()
+def get_undone_tasks_from_object(id: uuid.UUID):
+    search = session.execute(select(Object).filter_by(id=id)).scalar_one_or_none()
+    if search is None:
+        return ({"error": "object not found"}, 404)
+    from tasks import Task, ModuleTaskOut
+
+    tasks = session.scalars(
+        select(Task).where(
+            and_(id == Task.object_id, Task.done_scope != Task.work_scope)
+        )
+    ).all()
+    return [
+        ModuleTaskOut(
+            id=x.id,
+            description=x.description,
+            deadline=x.deadline,
+            work_scope=x.work_scope,
+            object_id=x.object_id,
+            done_scope=x.done_scope,
+        ).model_dump()
+        for x in tasks
+    ]
+
+
+@object_api.route("/<id>/fact", methods=["GET"])
 @validate()
 def calculate_fact(id: uuid.UUID):
     search = session.execute(select(Object).filter_by(id=id)).scalar_one_or_none()
@@ -125,28 +178,12 @@ def calculate_fact(id: uuid.UUID):
         return ({"error": "object not found"}, 404)
     from tasks import Task, ModuleTaskOut
 
-    stmt = session.scalars(select(Task).where(Task.done_scope == Task.work_scope))
-    if stmt is not None:
-        done_task = len(
-            [
-                ModuleTaskOut(
-                    id=x.id,
-                    description=x.description,
-                    deadline=x.deadline,
-                    work_scope=x.work_scope,
-                    object_id=x.object_id,
-                    done_scope=x.done_scope,
-                ).model_dump()
-                for x in stmt
-            ]
+    stmt = session.scalars(
+        select(Task).where(
+            and_(id == Task.object_id, Task.done_scope == Task.work_scope)
         )
-    else:
-        done_task = 0
-
-    stmt = session.scalars(select(Task).where(Task.done_scope != Task.work_scope))
-    if stmt is None:
-        return ({"error": "tasks not found"}, 404)
-    undone_tasks = len(
+    ).all()
+    done_tasks = len(
         [
             ModuleTaskOut(
                 id=x.id,
@@ -159,5 +196,20 @@ def calculate_fact(id: uuid.UUID):
             for x in stmt
         ]
     )
-    return {"some shit": f"{(done_task/undone_tasks * 100)}"}
-    session.commit()
+
+    stmt = session.scalars(select(Task).filter_by(object_id=id)).all()
+
+    all_tasks = len(
+        [
+            ModuleTaskOut(
+                id=x.id,
+                description=x.description,
+                deadline=x.deadline,
+                work_scope=x.work_scope,
+                object_id=x.object_id,
+                done_scope=x.done_scope,
+            ).model_dump()
+            for x in stmt
+        ]
+    )
+    return {"shit": done_tasks / all_tasks * 100}
