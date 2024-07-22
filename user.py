@@ -81,3 +81,28 @@ def delete_user(id: uuid.UUID):
         return ("", 204)
     else:
         return ({"error": "user not found"}, 404)
+
+
+@user_api.route("/<id>/tasks", methods=["GET"])
+@validate()
+def get_tasks_from_user(id: uuid.UUID):
+    from user_tasks import UserTask
+    from tasks import Task, ModuleTaskOut
+
+    search = session.execute(select(User).filter_by(id=id)).scalar_one_or_none()
+    if search is None:
+        return ({"error": "user not found"}, 404)
+    tasks = session.scalars(
+        select(Task).join(UserTask).filter_by(user_id=id)
+    ).all()
+    return [
+        ModuleTaskOut(
+            description=x.description,
+            id=x.id,
+            deadline=x.deadline,
+            work_scope=x.work_scope,
+            object_id=x.object_id,
+            done_scope=x.done_scope,
+        ).model_dump()
+        for x in tasks
+    ]
