@@ -22,6 +22,7 @@ class Task(Base):
     object_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("object.id"))
 
 
+
 class ModuleTaskIn(BaseModel):
     done_scope: Optional[int] = 0 
     work_scope: int

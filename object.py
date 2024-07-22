@@ -172,44 +172,56 @@ def get_undone_tasks_from_object(id: uuid.UUID):
 
 @object_api.route("/<id>/fact", methods=["GET"])
 @validate()
+# todo recalculte with V
 def calculate_fact(id: uuid.UUID):
     search = session.execute(select(Object).filter_by(id=id)).scalar_one_or_none()
     if search is None:
         return ({"error": "object not found"}, 404)
     from tasks import Task, ModuleTaskOut
 
-    stmt = session.scalars(
-        select(Task).where(
-            and_(id == Task.object_id, Task.done_scope == Task.work_scope)
-        )
-    ).all()
-    done_tasks = len(
-        [
-            ModuleTaskOut(
-                id=x.id,
-                description=x.description,
-                deadline=x.deadline,
-                work_scope=x.work_scope,
-                object_id=x.object_id,
-                done_scope=x.done_scope,
-            ).model_dump()
-            for x in stmt
-        ]
-    )
+    # stmt = session.scalars(
+    #     select(Task).where(
+    #         and_(id == Task.object_id, Task.done_scope == Task.work_scope)
+    #     )
+    # ).all()
+    # done_tasks = [
+    #     ModuleTaskOut(
+    #         id=x.id,
+    #         description=x.description,
+    #         deadline=x.deadline,
+    #         work_scope=x.work_scope,
+    #         object_id=x.object_id,
+    #         done_scope=x.done_scope,
+    #     ).model_dump()
+    #     for x in stmt
+    # ]
+    # done_v = 0
+    # for index in range(len(done_tasks)):
+    #     for key in done_tasks[index]:
+    #         if key == "done_scope":
+    #             done_v += done_tasks[index][key]
 
     stmt = session.scalars(select(Task).filter_by(object_id=id)).all()
 
-    all_tasks = len(
-        [
-            ModuleTaskOut(
-                id=x.id,
-                description=x.description,
-                deadline=x.deadline,
-                work_scope=x.work_scope,
-                object_id=x.object_id,
-                done_scope=x.done_scope,
-            ).model_dump()
-            for x in stmt
-        ]
-    )
-    return {"shit": done_tasks / all_tasks * 100}
+    all_tasks = [
+        ModuleTaskOut(
+            id=x.id,
+            description=x.description,
+            deadline=x.deadline,
+            work_scope=x.work_scope,
+            object_id=x.object_id,
+            done_scope=x.done_scope,
+        ).model_dump()
+        for x in stmt
+    ]
+    all_v = 0
+    done_v = 0
+    for index in range(len(all_tasks)):
+        for key in all_tasks[index]:
+            if key == "work_scope":
+                all_v += all_tasks[index][key]
+            if key == "done_scope":
+                done_v += all_tasks[index][key]
+
+    print(all_v, done_v)
+    return {"fact": (done_v / all_v) * 100}
