@@ -1,7 +1,7 @@
 from flask import request, Blueprint
 from typing import List
 from typing import Optional
-from sqlalchemy import ForeignKey, String, text, select, and_
+from sqlalchemy import ForeignKey, String, text, select, and_, update
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import uuid
 from db import Base, session
@@ -54,8 +54,15 @@ def create_assignment(body: UserTaskModuleIn):
     new_assignment = UserTask(
         description=body.description, task_id=body.task_id, user_id=body.user_id
     )
-
     session.add(new_assignment)
+    session.commit()
+
+    stmt = (
+        update(Task)
+        .where(body.task_id == Task.id)
+        .values(user_count=Task.user_count + 1)
+    )
+    session.execute(stmt)
     session.commit()
     return (
         UserTaskModuleOut(

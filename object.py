@@ -107,12 +107,15 @@ def get_all_tasks_from_object(id: uuid.UUID):
 
     return [
         ModuleTaskOut(
-            id=x.id,
             description=x.description,
+            id=x.id,
             deadline=x.deadline,
             work_scope=x.work_scope,
             object_id=x.object_id,
             done_scope=x.done_scope,
+            plan_scope_hours=x.plan_scope_hours,
+            user_count=x.user_count,
+            plan_per_hour=x.plan_per_hour,
         ).model_dump()
         for x in tasks
     ]
@@ -133,12 +136,15 @@ def get_done_tasks_from_object(id: uuid.UUID):
     ).all()
     return [
         ModuleTaskOut(
-            id=x.id,
             description=x.description,
+            id=x.id,
             deadline=x.deadline,
             work_scope=x.work_scope,
             object_id=x.object_id,
             done_scope=x.done_scope,
+            plan_scope_hours=x.plan_scope_hours,
+            user_count=x.user_count,
+            plan_per_hour=x.plan_per_hour,
         ).model_dump()
         for x in tasks
     ]
@@ -159,12 +165,15 @@ def get_undone_tasks_from_object(id: uuid.UUID):
     ).all()
     return [
         ModuleTaskOut(
-            id=x.id,
             description=x.description,
+            id=x.id,
             deadline=x.deadline,
             work_scope=x.work_scope,
             object_id=x.object_id,
             done_scope=x.done_scope,
+            plan_scope_hours=x.plan_scope_hours,
+            user_count=x.user_count,
+            plan_per_hour=x.plan_per_hour,
         ).model_dump()
         for x in tasks
     ]
@@ -205,12 +214,15 @@ def calculate_fact(id: uuid.UUID):
 
     all_tasks = [
         ModuleTaskOut(
-            id=x.id,
             description=x.description,
+            id=x.id,
             deadline=x.deadline,
             work_scope=x.work_scope,
             object_id=x.object_id,
             done_scope=x.done_scope,
+            plan_scope_hours=x.plan_scope_hours,
+            user_count=x.user_count,
+            plan_per_hour=x.plan_per_hour,
         ).model_dump()
         for x in stmt
     ]

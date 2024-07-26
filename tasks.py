@@ -19,16 +19,22 @@ class Task(Base):
     deadline: Mapped[datetime.datetime]
     work_scope: Mapped[int]
     done_scope: Mapped[int]
+    plan_per_hour: Mapped[int]  # some value that says how many work can do
+    shift: Mapped[int]  # how many hours in shift
+    plan_scope_hours: Mapped[int]  # work_scope / plan_per_hour
     object_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("object.id"))
-
+    user_count: Mapped[Optional[int]]
 
 
 class ModuleTaskIn(BaseModel):
-    done_scope: Optional[int] = 0 
+    plan_per_hour: int
+    shift: int
+    done_scope: Optional[int] = 0
     work_scope: int
     object_id: uuid.UUID
     description: str
     deadline: datetime.datetime
+    user_count: Optional[int] = 0
 
 
 class ModuleTaskOut(BaseModel):
@@ -36,8 +42,10 @@ class ModuleTaskOut(BaseModel):
     description: str
     deadline: datetime.datetime
     work_scope: int
+    plan_scope_hours: int
     object_id: uuid.UUID
     done_scope: int
+    user_count: int
 
 
 task_api = Blueprint("tasks", "tasks")
@@ -56,8 +64,13 @@ def create_task(body: ModuleTaskIn):
         deadline=body.deadline,
         work_scope=body.work_scope,
         done_scope=body.done_scope,
+        shift=body.shift,
+        plan_per_hour=body.plan_per_hour,
+        plan_scope_hours=(body.work_scope / body.plan_per_hour),
         object_id=body.object_id,
+        user_count=body.user_count,
     )
+
     session.add(new_task)
     session.commit()
     return (
@@ -68,6 +81,8 @@ def create_task(body: ModuleTaskIn):
             work_scope=new_task.work_scope,
             object_id=new_task.object_id,
             done_scope=new_task.done_scope,
+            user_count=new_task.done_scope,
+            plan_scope_hours=new_task.plan_scope_hours,
         ).model_dump(),
         201,
     )
@@ -86,6 +101,9 @@ def list_tasks():
             work_scope=x.work_scope,
             object_id=x.object_id,
             done_scope=x.done_scope,
+            plan_scope_hours=x.plan_scope_hours,
+            user_count=x.user_count,
+            plan_per_hour=x.plan_per_hour,
         ).model_dump()
         for x in tasks
     ]
