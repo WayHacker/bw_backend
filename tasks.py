@@ -24,6 +24,7 @@ class Task(Base):
     plan_scope_hours: Mapped[int]  # work_scope / plan_per_hour
     object_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("object.id"))
     user_count: Mapped[Optional[int]]
+    plan_in_hours: Mapped[int]
 
 
 class ModuleTaskIn(BaseModel):
@@ -46,6 +47,8 @@ class ModuleTaskOut(BaseModel):
     object_id: uuid.UUID
     done_scope: int
     user_count: int
+    shift: int
+    plan_in_hours: int
 
 
 task_api = Blueprint("tasks", "tasks")
@@ -69,6 +72,7 @@ def create_task(body: ModuleTaskIn):
         plan_scope_hours=(body.work_scope / body.plan_per_hour),
         object_id=body.object_id,
         user_count=body.user_count,
+        plan_in_hours=0,
     )
 
     session.add(new_task)
@@ -83,6 +87,8 @@ def create_task(body: ModuleTaskIn):
             done_scope=new_task.done_scope,
             user_count=new_task.done_scope,
             plan_scope_hours=new_task.plan_scope_hours,
+            shift=new_task.shift,
+            plan_in_hours=new_task.plan_in_hours,
         ).model_dump(),
         201,
     )
@@ -104,6 +110,8 @@ def list_tasks():
             plan_scope_hours=x.plan_scope_hours,
             user_count=x.user_count,
             plan_per_hour=x.plan_per_hour,
+            shift=x.shift,
+            plan_in_hours=x.plan_in_hours,
         ).model_dump()
         for x in tasks
     ]

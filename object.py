@@ -116,6 +116,8 @@ def get_all_tasks_from_object(id: uuid.UUID):
             plan_scope_hours=x.plan_scope_hours,
             user_count=x.user_count,
             plan_per_hour=x.plan_per_hour,
+            plan_in_hours=x.plan_in_hours,
+            shift=x.shift,
         ).model_dump()
         for x in tasks
     ]

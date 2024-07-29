@@ -47,7 +47,7 @@ def create_assignment(body: UserTaskModuleIn):
     search = session.execute(
         select(Task)
         .join(Assignment, Task.object_id == Assignment.object_id)
-        .where(Task.id == body.task_id)
+        .where(and_(Task.id == body.task_id, Assignment.user_id == body.user_id))
     ).scalar_one_or_none()
     if search is None:
         return {"Error": "Task and user not in the same object!"}
@@ -61,6 +61,13 @@ def create_assignment(body: UserTaskModuleIn):
         update(Task)
         .where(body.task_id == Task.id)
         .values(user_count=Task.user_count + 1)
+    )
+    session.execute(stmt)
+    session.commit()
+    stmt = (
+        update(Task)
+        .where(body.task_id == Task.id)
+        .values(plan_in_hours=Task.plan_scope_hours / (Task.user_count * Task.shift))
     )
     session.execute(stmt)
     session.commit()
