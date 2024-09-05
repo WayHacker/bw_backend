@@ -67,7 +67,7 @@ def create_assignment(body: UserTaskModuleIn):
     stmt = (
         update(Task)
         .where(body.task_id == Task.id)
-        .values(plan_in_hours=Task.plan_scope_hours / (Task.user_count * Task.shift))
+        .values(plan_in_days=Task.plan_scope_hours / (Task.user_count * Task.shift))
     )
     session.execute(stmt)
     session.commit()
