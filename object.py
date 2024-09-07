@@ -1,4 +1,4 @@
-from flask import request, Blueprint
+from flask import request, Blueprint, jsonify
 from typing import List
 from typing import Optional
 from sqlalchemy import ForeignKey, String, text, select, and_
@@ -181,12 +181,7 @@ def get_undone_tasks_from_object(id: uuid.UUID):
     ]
 
 
-@object_api.route("/<id>/fact", methods=["GET"])
-@validate()
-def calculate_fact(id: uuid.UUID):
-    search = session.execute(select(Object).filter_by(id=id)).scalar_one_or_none()
-    if search is None:
-        return ({"error": "object not found"}, 404)
+def calculate_fact(id):
     from tasks import Task, ModuleTaskOut
 
     stmt = session.scalars(select(Task).filter_by(object_id=id)).all()
@@ -222,13 +217,7 @@ def calculate_fact(id: uuid.UUID):
     return {"fact": (done_v / all_v) * 100}
 
 
-@object_api.route("/<id>/plan", methods=["GET"])
-@validate()
-def calculate_plan(id: uuid.UUID):
-
-    search = session.execute(select(Object).filter_by(id=id)).scalar_one_or_none()
-    if search is None:
-        return ({"error": "object not found"}, 404)
+def calculate_plan(id):
     from tasks import Task, ModuleTaskOut
     from datetime import datetime
 
@@ -270,27 +259,30 @@ def calculate_plan(id: uuid.UUID):
     return {"plan": plan / all_scope_plan * 100}
 
 
-@object_api.route("/<id>/plan_date", methods=["GET"])
+def get_plan_date(id):
+    from tasks import Task, ModuleTaskOut
+    from datetime import datetime
+
+    plan_start_date = session.execute(
+        select(Task).filter_by(object_id=id).order_by(Task.start_date.asc())
+    ).scalar()
+
+    plan_end_date = session.execute(
+        select(Task).filter_by(object_id=id).order_by(Task.start_date.desc())
+    ).scalar()
+    return {
+        "start_date": plan_start_date.start_date,
+        "end_date": plan_end_date.deadline,
+    }
+
+
+@object_api.route("/<id>/object_calc", methods=["GET"])
 @validate()
-def get_plan_date(id: uuid.UUID):
+def get_object_calc(id: uuid.UUID):
     search = session.execute(select(Object).filter_by(id=id)).scalar_one_or_none()
-    if search is not None:
-        from tasks import Task, ModuleTaskOut
-        from datetime import datetime
-
-        plan_start_date = session.execute(
-            select(Task).filter_by(object_id=id).order_by(Task.start_date.asc())
-        ).scalar()
-
-        plan_end_date = session.execute(
-            select(Task).filter_by(object_id=id).order_by(Task.start_date.desc())
-        ).scalar()
-        return (
-            {
-                "start_date": plan_start_date.start_date,
-                "end_date": plan_end_date.deadline,
-            },
-            200,
-        )
-    else:
+    if search is None:
         return ({"error": "object not found"}, 404)
+    fact = calculate_fact(id)
+    plan = calculate_plan(id)
+    dates = get_plan_date(id)
+    return ({"fact": fact, "plan": plan, "dates": dates}, 200)
