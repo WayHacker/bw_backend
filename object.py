@@ -217,9 +217,9 @@ def calculate_fact(id):
     return {"fact": (done_v / all_v) * 100}
 
 
-def calculate_plan(id):
+def calculate_plan_and_predict(id):
     from tasks import Task, ModuleTaskOut
-    from datetime import datetime
+    from datetime import datetime, timedelta
 
     stmt = session.scalars(select(Task).filter_by(object_id=id)).all()
 
@@ -243,25 +243,28 @@ def calculate_plan(id):
     ]
     all_scope_plan = 0
     plan = 0
-    print(all_tasks)
-
+    all_scope_done = 0
     for index in range(len(all_tasks)):
         delta = datetime.now() - all_tasks[index]["start_date"]
-        print(
-            (all_tasks[index]["user_count_by_plan"] * all_tasks[index]["shift"])
-            * (delta.days)
-        )
         plan += (all_tasks[index]["user_count_by_plan"] * all_tasks[index]["shift"]) * (
             delta.days
         )
         all_scope_plan += all_tasks[index]["plan_scope_hours"]
-    print(all_scope_plan, plan)
-    return {"plan": plan / all_scope_plan * 100}
+        all_scope_done += all_tasks[index]["done_scope"]
+
+    diff = plan - all_scope_done
+    plan_end_date = session.execute(
+        select(Task).filter_by(object_id=id).order_by(Task.start_date.desc())
+    ).scalar()
+    return {
+        "plan": plan / all_scope_plan * 100,
+        "predict": plan_end_date.deadline + timedelta(hours=diff),
+        "predict_in_hours": diff,
+    }
 
 
 def get_plan_date(id):
-    from tasks import Task, ModuleTaskOut
-    from datetime import datetime
+    from tasks import Task
 
     plan_start_date = session.execute(
         select(Task).filter_by(object_id=id).order_by(Task.start_date.asc())
@@ -283,6 +286,6 @@ def get_object_calc(id: uuid.UUID):
     if search is None:
         return ({"error": "object not found"}, 404)
     fact = calculate_fact(id)
-    plan = calculate_plan(id)
+    plan = calculate_plan_and_predict(id)
     dates = get_plan_date(id)
     return ({"fact": fact, "plan": plan, "dates": dates}, 200)
