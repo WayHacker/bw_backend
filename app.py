@@ -40,4 +40,6 @@ from user_tasks import user_task_api
 
 app.register_blueprint(user_task_api, url_prefix="/user_tasks")
 
+from obj_changes import changes_api
 
+app.register_blueprint(changes_api, url_prefix="/changes")

@@ -116,8 +116,10 @@ def get_all_tasks_from_object(id: uuid.UUID):
             plan_scope_hours=x.plan_scope_hours,
             user_count=x.user_count,
             plan_per_hour=x.plan_per_hour,
-            plan_in_days=x.plan_in_days,
             shift=x.shift,
+            plan_in_days=x.plan_in_days,
+            start_date=x.start_date,
+            user_count_by_plan=x.user_count_by_plan,
         ).model_dump()
         for x in tasks
     ]
@@ -147,6 +149,10 @@ def get_done_tasks_from_object(id: uuid.UUID):
             plan_scope_hours=x.plan_scope_hours,
             user_count=x.user_count,
             plan_per_hour=x.plan_per_hour,
+            shift=x.shift,
+            plan_in_days=x.plan_in_days,
+            start_date=x.start_date,
+            user_count_by_plan=x.user_count_by_plan,
         ).model_dump()
         for x in tasks
     ]
@@ -176,6 +182,10 @@ def get_undone_tasks_from_object(id: uuid.UUID):
             plan_scope_hours=x.plan_scope_hours,
             user_count=x.user_count,
             plan_per_hour=x.plan_per_hour,
+            shift=x.shift,
+            plan_in_days=x.plan_in_days,
+            start_date=x.start_date,
+            user_count_by_plan=x.user_count_by_plan,
         ).model_dump()
         for x in tasks
     ]

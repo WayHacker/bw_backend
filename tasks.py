@@ -86,18 +86,19 @@ def create_task(body: ModuleTaskIn):
     session.commit()
     return (
         ModuleTaskOut(
-            id=new_task.id,
             description=new_task.description,
+            id=new_task.id,
             deadline=new_task.deadline,
             work_scope=new_task.work_scope,
             object_id=new_task.object_id,
             done_scope=new_task.done_scope,
-            user_count=new_task.done_scope,
             plan_scope_hours=new_task.plan_scope_hours,
+            user_count=new_task.user_count,
+            plan_per_hour=new_task.plan_per_hour,
             shift=new_task.shift,
             plan_in_days=new_task.plan_in_days,
             start_date=new_task.start_date,
-            user_count_by_plan=new_task.user_count_by_plan
+            user_count_by_plan=new_task.user_count_by_plan,
         ).model_dump(),
         201,
     )
@@ -122,7 +123,7 @@ def list_tasks():
             shift=x.shift,
             plan_in_days=x.plan_in_days,
             start_date=x.start_date,
-            user_count_by_plan=x.user_count_by_plan
+            user_count_by_plan=x.user_count_by_plan,
         ).model_dump()
         for x in tasks
     ]
@@ -135,7 +136,19 @@ def get_task(id: uuid.UUID):
     if search is not None:
         return (
             ModuleTaskOut(
-                id=id, description=search.description, deadline=search.deadline
+                description=x.description,
+                id=x.id,
+                deadline=x.deadline,
+                work_scope=x.work_scope,
+                object_id=x.object_id,
+                done_scope=x.done_scope,
+                plan_scope_hours=x.plan_scope_hours,
+                user_count=x.user_count,
+                plan_per_hour=x.plan_per_hour,
+                shift=x.shift,
+                plan_in_days=x.plan_in_days,
+                start_date=x.start_date,
+                user_count_by_plan=x.user_count_by_plan,
             ).model_dump(),
             200,
         )
