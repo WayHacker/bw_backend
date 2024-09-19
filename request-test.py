@@ -22,30 +22,30 @@ print(r.status_code, requests.Response.json(r))
 r = requests.post(
     "http://127.0.0.1:5000/tasks/",
     json={
-        "user_count_by_plan":1,
+        "user_count_by_plan": 1,
         "description": "Poop",
         "plan_per_hour": 10,
         "shift": 10,
         "work_scope": 10,
-        "done_scope": 15,
+        "done_scope": 10,
         "object_id": alpha_id,
-        "start_date": "2024-09-02 08:00:00",
+        "start_date": "2024-09-09 08:00:00",
     },
 )
 # print(r.status_code)
-r = requests.post(
-    "http://127.0.0.1:5000/tasks/",
-    json={
-        "user_count_by_plan":1,
-        "description": "Drink Cock-Cola",
-        "plan_per_hour": 10,
-        "shift": 10,
-        "work_scope": 10,
-        "object_id": alpha_id,
-        "done_scope": 20,
-        "start_date": "2024-09-02 08:00:00",
-    },
-)
+# r = requests.post(
+#     "http://127.0.0.1:5000/tasks/",
+#     json={
+#         "user_count_by_plan":1,
+#         "description": "Drink Cock-Cola",
+#         "plan_per_hour": 10,
+#         "shift": 10,
+#         "work_scope": 10,
+#         "object_id": alpha_id,
+#         "done_scope": 20,
+#         "start_date": "2024-09-02 08:00:00",
+#     },
+# )
 
 cola_task = r.json().get("id")
 
@@ -100,6 +100,18 @@ r = requests.post(
         "description": "Max working on this task",
         "task_id": cola_task,
         "user_id": max_id,
+    },
+)
+print(r.status_code)
+
+
+r = requests.post(
+    "http://127.0.0.1:5000/changes/",
+    json={
+        "name": "First change",
+        "who_change": max_id,
+        "reasons": "Some reasons",
+        "object_id": alpha_id,
     },
 )
 print(r.status_code)
