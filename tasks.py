@@ -1,5 +1,5 @@
 from flask import Blueprint
-from sqlalchemy import text, select, ForeignKey
+from sqlalchemy import text, select, ForeignKey, update
 from sqlalchemy.orm import Mapped, mapped_column
 import uuid
 from db import Base, session
@@ -30,6 +30,7 @@ class Task(Base):
 
 
 class ModuleTaskIn(BaseModel):
+    task_id: Optional[uuid.UUID] = None
     user_count_by_plan: int
     plan_per_hour: int
     shift: int
@@ -75,7 +76,8 @@ def create_task(body: ModuleTaskIn):
         shift=body.shift,
         plan_per_hour=body.plan_per_hour,
         plan_scope_hours=(body.work_scope * body.plan_per_hour),
-        deadline=body.start_date + datetime.timedelta(days=10),
+        deadline=body.start_date
+        + datetime.timedelta(days=10),  # TODO chagne deadline to dynamic calculation
         object_id=body.object_id,
         user_count=body.user_count,
         start_date=body.start_date,
@@ -136,19 +138,19 @@ def get_task(id: uuid.UUID):
     if search is not None:
         return (
             ModuleTaskOut(
-                description=x.description,
-                id=x.id,
-                deadline=x.deadline,
-                work_scope=x.work_scope,
-                object_id=x.object_id,
-                done_scope=x.done_scope,
-                plan_scope_hours=x.plan_scope_hours,
-                user_count=x.user_count,
-                plan_per_hour=x.plan_per_hour,
-                shift=x.shift,
-                plan_in_days=x.plan_in_days,
-                start_date=x.start_date,
-                user_count_by_plan=x.user_count_by_plan,
+                description=search.description,
+                id=search.id,
+                deadline=search.deadline,
+                work_scope=search.work_scope,
+                object_id=search.object_id,
+                done_scope=search.done_scope,
+                plan_scope_hours=search.plan_scope_hours,
+                user_count=search.user_count,
+                plan_per_hour=search.plan_per_hour,
+                shift=search.shift,
+                plan_in_days=search.plan_in_days,
+                start_date=search.start_date,
+                user_count_by_plan=search.user_count_by_plan,
             ).model_dump(),
             200,
         )
@@ -200,3 +202,30 @@ def get_materials_from_task(id: uuid.UUID):
         MaterialModelOut(id=x.id, name=x.name, supply=x.supply).model_dump()
         for x in materials
     ]
+
+
+@task_api.route("/", methods=["PUT"])
+@validate()
+def update_task(body: ModuleTaskIn):
+    search = session.execute(select(Task).filter_by(id=body.task_id)).first()
+    if search is None:
+        return ({"error": "task not found"}, 404)
+    stmt = (
+        update(Task)
+        .where(body.task_id == Task.id)
+        .values(
+            object_id=body.object_id,
+            description=body.description,
+            work_scope=body.work_scope,
+            done_scope=body.done_scope,
+            user_count=body.user_count,
+            shift=body.shift,
+            user_count_by_plan=body.user_count_by_plan,
+            start_date=body.start_date,
+            plan_per_hour=body.plan_per_hour,
+        )
+    )
+    session.execute(stmt)
+    session.commit()
+
+    return ("", 200)

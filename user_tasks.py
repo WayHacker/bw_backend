@@ -64,13 +64,6 @@ def create_assignment(body: UserTaskModuleIn):
     )
     session.execute(stmt)
     session.commit()
-    stmt = (
-        update(Task)
-        .where(body.task_id == Task.id)
-        .values(plan_in_days=Task.plan_scope_hours / (Task.user_count * Task.shift))
-    )
-    session.execute(stmt)
-    session.commit()
     return (
         UserTaskModuleOut(
             id=new_assignment.id,

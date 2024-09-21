@@ -1,15 +1,13 @@
 from flask import request, Blueprint, jsonify
 from typing import List
 from typing import Optional
-from sqlalchemy import ForeignKey, String, text, select, and_
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import String, text, select, and_
+from sqlalchemy.orm import Mapped, mapped_column
 import uuid
 from db import Base, session
 from pydantic import BaseModel
 from flask_pydantic import validate
 import datetime
-
-""""TODO validation, not return when create and missing when list all changes. (UUID)"""
 
 
 class Change(Base):
@@ -44,6 +42,7 @@ class ChangeModelOut(BaseModel):
 
 
 changes_api = Blueprint("changes", "changes")
+"""TODO task id if it change -> change task -> auto update days of task deadline"""
 
 
 @changes_api.route("/", methods=["POST"])
@@ -67,6 +66,7 @@ def create_Change(body: ChangeModelIn):
             who_change=new_change.who_change,
             reasons=new_change.reasons,
             date=new_change.date,
+            days=new_change.days,
         ),
         201,
     )
