@@ -22,6 +22,7 @@ class Change(Base):
     days: Mapped[int]
     reasons: Mapped[str]
     who_change: Mapped[uuid.UUID]
+    task_id: Mapped[Optional[uuid.UUID]]
 
 
 class ChangeModelIn(BaseModel):
@@ -30,6 +31,7 @@ class ChangeModelIn(BaseModel):
     days: Optional[int] = 0
     reasons: str
     object_id: uuid.UUID
+    task_id: Optional[uuid.UUID] = None
 
 
 class ChangeModelOut(BaseModel):
@@ -39,6 +41,7 @@ class ChangeModelOut(BaseModel):
     who_change: uuid.UUID
     days: int
     reasons: str
+    task_id: Optional[uuid.UUID] = None
 
 
 changes_api = Blueprint("changes", "changes")

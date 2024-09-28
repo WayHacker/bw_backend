@@ -227,5 +227,4 @@ def update_task(body: ModuleTaskIn):
     )
     session.execute(stmt)
     session.commit()
-
     return ("", 200)

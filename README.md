@@ -21,6 +21,10 @@ A backend written for Build Watchdog system, use postgres and python
 
 7. **[GET]** http://77.221.141.68:20/objects/{id}/object_calc - *returns fact, plan and prediction for this object*
 
+8. **[GET]** http://77.221.141.68:20/objects/{id}/done_tasks - *return all done tasks in object*
+
+9. **[GET]** http://77.221.141.68:20/objects/{id}/undone_tasks - *return all undone tasks in object*
+
 ## Tasks
 
 1. **[GET]** http://77.221.141.68:20/tasks/ - *list of all tasks*
@@ -41,6 +45,7 @@ A backend written for Build Watchdog system, use postgres and python
     start_date: datetime
     }
     ```
+
 3. **[GET]** http://77.221.141.68:20/tasks/{id} - *list only one task*
 
 4. **[DELETE]** http://77.221.141.68:20/tasks/{id} - *delete task by id*
@@ -64,4 +69,43 @@ A backend written for Build Watchdog system, use postgres and python
     ```
 
 
+## Assignments
+Assignments object -> user 
 
+1. **[GET]** http://77.221.141.68:20/assignments/ - *list of all assignments*
+2. **[POST]** http://77.221.141.68:20/assignments/ - *create one assignment*
+    
+    Input types:
+    ```json
+    {
+    object_id: uuid,
+    user_id: uuid,
+    description: str
+    }
+    ```
+3. **[GET]** http://77.221.141.68:20/assignments/{id} - *list only one assingment by id*
+
+4. **[DELETE]** http://77.221.141.68:20/assignments/{id} - *delete assignment by id*
+
+
+## User to Tasks
+Assignments user -> task 
+
+1. **[GET]** http://77.221.141.68:20/user_tasks/ - *list of all assignments*
+2. **[POST]** http://77.221.141.68:20/user_tasks/ - *create one assignment*
+    
+    Input types:
+    ```json
+    {
+    task_id: uuid,
+    user_id: uuid,
+    description: str
+    }
+    ```
+
+#### You can create user -> task assignment only if task and user are in one object!
+After it, prediction and user_count will be updated
+
+3. **[GET]** http://77.221.141.68:20/user_tasks/{id} - *list only one assingment by id*
+
+4. **[DELETE]** http://77.221.141.68:20/user_tasks/{id} - *delete assignment by id*
