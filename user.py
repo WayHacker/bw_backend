@@ -17,17 +17,19 @@ class User(Base):
     )
     name: Mapped[Optional[str]]
     phone: Mapped[str]
+    kpi: Mapped[float]
 
 
 class UserModelOut(BaseModel):
     id: uuid.UUID
     name: Optional[str]
     phone: str
-
+    kpi: float
 
 class UserModelIn(BaseModel):
     phone: str
     name: Optional[str]
+    
 
 
 user_api = Blueprint("users", "users")
@@ -36,14 +38,14 @@ user_api = Blueprint("users", "users")
 @user_api.route("/", methods=["POST"])
 @validate()
 def create_user(body: UserModelIn):
-    new_user = User(name=body.name, phone=body.phone)
+    new_user = User(name=body.name, phone=body.phone, kpi=0.0)
     search = session.execute(select(User).filter_by(phone=new_user.phone)).first()
     if search is None:
         session.add(new_user)
         session.commit()
         return (
             UserModelOut(
-                name=new_user.name, phone=new_user.phone, id=new_user.id
+                name=new_user.name, phone=new_user.phone, id=new_user.id, kpi=new_user.kpi
             ).model_dump(),
             201,
         )
@@ -57,7 +59,7 @@ def list_users():
     q = select(User)
     users = session.scalars(q).all()
     return [
-        UserModelOut(name=x.name, phone=x.phone, id=x.id).model_dump() for x in users
+        UserModelOut(name=x.name, phone=x.phone, id=x.id, kpi=x.kpi).model_dump() for x in users
     ]
 
 
@@ -66,7 +68,7 @@ def list_users():
 def get_user(id: uuid.UUID):
     search = session.execute(select(User).filter_by(id=id)).scalar_one_or_none()
     if search is not None:
-        return UserModelOut(name=search.name, id=search.id, phone=search.phone)
+        return UserModelOut(name=search.name, id=search.id, phone=search.phone, kpi=search.kpi)
     else:
         return ({"error": "user not found"}, 404)
 
@@ -103,6 +105,13 @@ def get_tasks_from_user(id: uuid.UUID):
             work_scope=x.work_scope,
             object_id=x.object_id,
             done_scope=x.done_scope,
+            plan_scope_hours=x.plan_scope_hours,
+            user_count=x.user_count,
+            plan_per_hour=x.plan_per_hour,
+            shift=x.shift,
+            plan_in_days=x.plan_in_days,
+            start_date=x.start_date,
+            user_count_by_plan=x.user_count_by_plan,
         ).model_dump()
         for x in tasks
     ]
