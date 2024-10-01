@@ -1,4 +1,4 @@
-"""empty message
+"""Add start date to task table
 
 Revision ID: 707f8db71925
 Revises: 089357298a21

@@ -7,6 +7,7 @@ import uuid
 from db import Base, session
 from pydantic import BaseModel, Field
 from flask_pydantic import validate
+from typing import Literal
 
 
 class User(Base):
@@ -18,6 +19,7 @@ class User(Base):
     name: Mapped[Optional[str]]
     phone: Mapped[str]
     kpi: Mapped[float]
+    role: Mapped[str]
 
 
 class UserModelOut(BaseModel):
@@ -25,11 +27,13 @@ class UserModelOut(BaseModel):
     name: Optional[str]
     phone: str
     kpi: float
+    role: str
+
 
 class UserModelIn(BaseModel):
     phone: str
     name: Optional[str]
-    
+    role: Literal["prorab", "worker"]
 
 
 user_api = Blueprint("users", "users")
@@ -38,14 +42,18 @@ user_api = Blueprint("users", "users")
 @user_api.route("/", methods=["POST"])
 @validate()
 def create_user(body: UserModelIn):
-    new_user = User(name=body.name, phone=body.phone, kpi=0.0)
+    new_user = User(name=body.name, phone=body.phone, kpi=0.0, role=body.role)
     search = session.execute(select(User).filter_by(phone=new_user.phone)).first()
     if search is None:
         session.add(new_user)
         session.commit()
         return (
             UserModelOut(
-                name=new_user.name, phone=new_user.phone, id=new_user.id, kpi=new_user.kpi
+                name=new_user.name,
+                phone=new_user.phone,
+                id=new_user.id,
+                kpi=new_user.kpi,
+                role=new_user.role,
             ).model_dump(),
             201,
         )
@@ -59,7 +67,10 @@ def list_users():
     q = select(User)
     users = session.scalars(q).all()
     return [
-        UserModelOut(name=x.name, phone=x.phone, id=x.id, kpi=x.kpi).model_dump() for x in users
+        UserModelOut(
+            name=x.name, phone=x.phone, id=x.id, kpi=x.kpi, role=x.role
+        ).model_dump()
+        for x in users
     ]
 
 
@@ -68,7 +79,13 @@ def list_users():
 def get_user(id: uuid.UUID):
     search = session.execute(select(User).filter_by(id=id)).scalar_one_or_none()
     if search is not None:
-        return UserModelOut(name=search.name, id=search.id, phone=search.phone, kpi=search.kpi)
+        return UserModelOut(
+            name=search.name,
+            id=search.id,
+            phone=search.phone,
+            kpi=search.kpi,
+            role=search.role,
+        )
     else:
         return ({"error": "user not found"}, 404)
 
@@ -94,9 +111,7 @@ def get_tasks_from_user(id: uuid.UUID):
     search = session.execute(select(User).filter_by(id=id)).scalar_one_or_none()
     if search is None:
         return ({"error": "user not found"}, 404)
-    tasks = session.scalars(
-        select(Task).join(UserTask).filter_by(user_id=id)
-    ).all()
+    tasks = session.scalars(select(Task).join(UserTask).filter_by(user_id=id)).all()
     return [
         ModuleTaskOut(
             description=x.description,
