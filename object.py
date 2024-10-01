@@ -120,6 +120,7 @@ def get_all_tasks_from_object(id: uuid.UUID):
             plan_in_days=x.plan_in_days,
             start_date=x.start_date,
             user_count_by_plan=x.user_count_by_plan,
+            in_progres=x.in_progres,
         ).model_dump()
         for x in tasks
     ]
@@ -153,6 +154,7 @@ def get_done_tasks_from_object(id: uuid.UUID):
             plan_in_days=x.plan_in_days,
             start_date=x.start_date,
             user_count_by_plan=x.user_count_by_plan,
+            in_progres=x.in_progres,
         ).model_dump()
         for x in tasks
     ]
@@ -186,6 +188,7 @@ def get_undone_tasks_from_object(id: uuid.UUID):
             plan_in_days=x.plan_in_days,
             start_date=x.start_date,
             user_count_by_plan=x.user_count_by_plan,
+            in_progres=x.in_progres,
         ).model_dump()
         for x in tasks
     ]
@@ -211,6 +214,7 @@ def calculate_fact(id):
             shift=x.shift,
             user_count_by_plan=x.user_count_by_plan,
             start_date=x.start_date,
+            in_progres=x.in_progres,
         ).model_dump()
         for x in stmt
     ]
@@ -287,6 +291,9 @@ def get_plan_date(id):
         "start_date": plan_start_date.start_date,
         "end_date": plan_end_date.deadline,
     }
+
+
+# TODO calculate progres func
 
 
 @object_api.route("/<id>/object_calc", methods=["GET"])

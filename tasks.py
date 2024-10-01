@@ -27,6 +27,7 @@ class Task(Base):
     user_count: Mapped[Optional[int]]
     user_count_by_plan: Mapped[Optional[int]]
     plan_in_days: Mapped[int]
+    in_progres: Mapped[int]  # TODO in progres can accepted by role prorab
 
 
 class ModuleTaskIn(BaseModel):
@@ -55,6 +56,12 @@ class ModuleTaskOut(BaseModel):
     plan_in_days: int
     start_date: datetime.datetime
     user_count_by_plan: int
+    in_progres: int
+
+
+class ModuleWorkerUpdate(BaseModel):
+    user_id: uuid.UUID
+    scope: int
 
 
 task_api = Blueprint("tasks", "tasks")
@@ -82,6 +89,7 @@ def create_task(body: ModuleTaskIn):
         user_count=body.user_count,
         start_date=body.start_date,
         plan_in_days=0,
+        in_progres=0,
     )
 
     session.add(new_task)
@@ -101,6 +109,7 @@ def create_task(body: ModuleTaskIn):
             plan_in_days=new_task.plan_in_days,
             start_date=new_task.start_date,
             user_count_by_plan=new_task.user_count_by_plan,
+            in_progres=new_task.in_progres,
         ).model_dump(),
         201,
     )
@@ -126,6 +135,7 @@ def list_tasks():
             plan_in_days=x.plan_in_days,
             start_date=x.start_date,
             user_count_by_plan=x.user_count_by_plan,
+            in_progres=x.in_progres,
         ).model_dump()
         for x in tasks
     ]
@@ -151,6 +161,7 @@ def get_task(id: uuid.UUID):
                 plan_in_days=search.plan_in_days,
                 start_date=search.start_date,
                 user_count_by_plan=search.user_count_by_plan,
+                in_progres=search.in_progres,
             ).model_dump(),
             200,
         )
@@ -223,6 +234,43 @@ def update_task(body: ModuleTaskIn):
             user_count_by_plan=body.user_count_by_plan,
             start_date=body.start_date,
             plan_per_hour=body.plan_per_hour,
+        )
+    )
+    session.execute(stmt)
+    session.commit()
+    return ("", 200)
+
+
+# TODO extra validation for scope
+@task_api.route("<id>/dowork", methods=["PUT"])
+@validate()
+def update_task_by_human(body: ModuleWorkerUpdate, id: uuid.UUID):
+    print(body, id)
+    search = session.execute(select(Task).filter_by(id=id)).first()
+    if search is None:
+        return ({"error": "task not found"}, 404)
+    from user import User
+
+    user_r = session.execute(select(User).filter_by(id=body.user_id)).scalar_one()
+    if user_r is None:
+        return ({"error": "user not found"}, 404)
+    if user_r.role == "prorab":
+        stmt = (
+            update(Task)
+            .where(id == Task.id)
+            .values(
+                done_scope=body.scope,
+            )
+        )
+        session.execute(stmt)
+        session.commit()
+        return ("", 200)
+
+    stmt = (
+        update(Task)
+        .where(id == Task.id)
+        .values(
+            in_progres=body.scope,
         )
     )
     session.execute(stmt)
