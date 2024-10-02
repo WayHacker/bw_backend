@@ -231,6 +231,43 @@ def calculate_fact(id):
     return {"fact": (done_v / all_v) * 100}
 
 
+def calculate_progres(id):
+    from tasks import Task, ModuleTaskOut
+
+    stmt = session.scalars(select(Task).filter_by(object_id=id)).all()
+
+    all_tasks = [
+        ModuleTaskOut(
+            description=x.description,
+            id=x.id,
+            deadline=x.deadline,
+            work_scope=x.work_scope,
+            object_id=x.object_id,
+            done_scope=x.done_scope,
+            plan_scope_hours=x.plan_scope_hours,
+            user_count=x.user_count,
+            plan_per_hour=x.plan_per_hour,
+            plan_in_days=x.plan_in_days,
+            shift=x.shift,
+            user_count_by_plan=x.user_count_by_plan,
+            start_date=x.start_date,
+            in_progres=x.in_progres,
+        ).model_dump()
+        for x in stmt
+    ]
+    all_v = 0
+    progres_v = 0
+    for index in range(len(all_tasks)):
+        for key in all_tasks[index]:
+            if key == "plan_scope_hours":
+                all_v += all_tasks[index][key]
+            if key == "in_progres":
+                progres_v += all_tasks[index][key]
+
+    print(all_v, progres_v)
+    return {"in_progres": (progres_v / all_v) * 100}
+
+
 def calculate_plan_and_predict(id):
     from tasks import Task, ModuleTaskOut
     from datetime import datetime, timedelta
@@ -252,6 +289,7 @@ def calculate_plan_and_predict(id):
             shift=x.shift,
             start_date=x.start_date,
             user_count_by_plan=x.user_count_by_plan,
+            in_progres=x.in_progres,
         ).model_dump()
         for x in stmt
     ]
@@ -305,4 +343,5 @@ def get_object_calc(id: uuid.UUID):
     fact = calculate_fact(id)
     plan = calculate_plan_and_predict(id)
     dates = get_plan_date(id)
-    return ({"fact": fact, "plan": plan, "dates": dates}, 200)
+    in_progres = calculate_progres(id)
+    return ({"fact": fact, "plan": plan, "dates": dates, "in_progres": in_progres}, 200)

@@ -43,7 +43,7 @@ r = requests.post(
         "work_scope": 10,
         "object_id": alpha_id,
         "done_scope": 20,
-        "start_date": "2024-09-02 08:00:00",
+        "start_date": "2024-09-30 08:00:00",
     },
 )
 
@@ -70,6 +70,7 @@ r = requests.post(
     "http://127.0.0.1:5000/users/",
     json={"name": "Jumaysenba", "phone": "+77777777777", "role": "worker"},
 )
+jumaysenba_id = r.json().get("id")
 print(r.status_code)
 worker_id = r.json().get("id")
 r = requests.post(
@@ -81,7 +82,8 @@ r = requests.post(
     },
 )
 r = requests.post(
-    "http://127.0.0.1:5000/users/", json={"name": "Gandon", "phone": "+71112223344", "role":"worker"}
+    "http://127.0.0.1:5000/users/",
+    json={"name": "Gandon", "phone": "+71112223344", "role": "worker"},
 )
 print(r.status_code)
 worker_id = r.json().get("id")
@@ -116,18 +118,13 @@ r = requests.post(
 )
 print(r.status_code)
 
-# r = requests.put(
-#     "http://127.0.0.1:5000/tasks/",
-#     json={
-#         "task_id": cola_task,
-#         "user_count_by_plan": 1,
-#         "description": "Drink Cock-Cola",
-#         "plan_per_hour": 10,
-#         "shift": 10,
-#         "work_scope": 10,
-#         "object_id": alpha_id,
-#         "done_scope": 40,
-#         "start_date": "2024-09-02 08:00:00",
-#     },
-# )
-# print(r.status_code)
+r = requests.put(
+    f"http://127.0.0.1:5000/tasks/{cola_task}/dowork",
+    json={"user_id": max_id, "scope": 30},
+)
+
+r = requests.put(
+    f"http://127.0.0.1:5000/tasks/{cola_task}/dowork",
+    json={"user_id": jumaysenba_id, "scope": 50},
+)
+print(r.status_code)

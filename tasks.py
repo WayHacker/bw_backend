@@ -259,7 +259,7 @@ def update_task_by_human(body: ModuleWorkerUpdate, id: uuid.UUID):
             update(Task)
             .where(id == Task.id)
             .values(
-                done_scope=body.scope,
+                done_scope=Task.done_scope + body.scope,
             )
         )
         session.execute(stmt)
@@ -270,7 +270,7 @@ def update_task_by_human(body: ModuleWorkerUpdate, id: uuid.UUID):
         update(Task)
         .where(id == Task.id)
         .values(
-            in_progres=body.scope,
+            in_progres=Task.in_progres + body.scope,
         )
     )
     session.execute(stmt)
